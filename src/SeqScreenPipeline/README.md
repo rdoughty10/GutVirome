@@ -1,0 +1,2 @@
+# SeqScreen Pipeline
+This set of files pipelines the process from raw fastq samples to a processed table of seqscreen results for batched samples. The pipeline was developed in February 2023 and supports the processing of Gut Microbiome samples for processing on a slurm cluster
