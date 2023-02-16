@@ -1,5 +1,5 @@
-# split_fasta.py (assumes you have biopython installed, e.g. with pip install biopython)
-
+""" split_fasta.py (assumes you have biopython installed, e.g. with pip install biopython)
+"""
 import sys, math
 import argparse
 from Bio import SeqIO
