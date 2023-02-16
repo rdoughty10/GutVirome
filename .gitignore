@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#-----------------------------
+##PROJECT GITIGNORE
+##slurm stuff
+src/util/.job/*.slurm
+
+##blast outputs
+src/util/blastn.out/*
+
+##Miscellaneous Folder 
+src/Miscellaneous/*
