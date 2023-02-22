@@ -131,10 +131,16 @@ dmypy.json
 #-----------------------------
 ##PROJECT GITIGNORE
 ##slurm stuff
-src/util/.job/*.slurm
+.job/
+work/
 
 ##blast outputs
-src/util/blastn.out/*
+blastn.out/
 
 ##Miscellaneous Folder 
 src/Miscellaneous/*
+
+##nextflow
+.nextflow.log*
+.nextflow/
+*.out
