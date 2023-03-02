@@ -14,9 +14,9 @@ def seqscreen(fasta:str,
            working:str,
            sensitive:bool=False,
            threads:int=1,
-           days:int=1,
+           days:int=3,
            hours:int=0,
-           memory:int=300,
+           memory:int=1,
            email:str='rdd57@case.edu'):
     """Run blastn on slurm cluster
 
@@ -38,9 +38,9 @@ def seqscreen(fasta:str,
     job_file = os.path.join(job_directory, f"{outname}.slurm")
 
     if sensitive:
-        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --report_only --sensitive --blastn'
+        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --sensitive --blastn'
     else:
-        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --report_only'
+        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix'
 
     with open(job_file, "w") as slurm:
         slurm.writelines("#!/bin/bash\n")
@@ -48,8 +48,10 @@ def seqscreen(fasta:str,
             slurm.writelines(f"#SBATCH -t {days}-{hours}:00:00\n")
         else:
             slurm.writelines(f"#SBATCH -t {hours}:00:00\n")
+        slurm.writelines(f"#SBATCH -C clk\n")
         slurm.writelines(f"#SBATCH --mem {memory}G\n")
-        slurm.writelines("#SBATCH --nodes 1\n")
+        # slurm.writelines("#SBATCH --nodes 1\n")
+        # slurm.writelines("#SBATCH --exclusive\n")
         # slurm.writelines("#SBATCH --ntasks 1\n")
         # slurm.writelines(f"#SBATCH --cpus-per-task {threads}\n")
         slurm.writelines("#SBATCH --mail-type=begin\n")
@@ -73,11 +75,11 @@ def parse_args():
                     default=False,
                     help='Run SeqScreen in sensitive mode')
     parser.add_argument('--threads', default=1, type=int, help='number of threads')
-    parser.add_argument('--days', default=0, type=int,
+    parser.add_argument('--days', default=2, type=int,
                         help='Number of days running for slurm')
-    parser.add_argument('--hours', default=12, type=int,
+    parser.add_argument('--hours', default=0, type=int,
                         help='Number of hours running for slurm')
-    parser.add_argument('--memory', default=128, type=int,
+    parser.add_argument('--memory', default=1, type=int,
                         help='Memory for slurm (GB)')
     parser.add_argument('--email', default='rdd57@case.edu', type=str,
                         help='Email for slurm updates')
