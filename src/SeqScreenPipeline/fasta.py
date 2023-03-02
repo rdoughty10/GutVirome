@@ -25,9 +25,10 @@ def fasta(pipeline:str):
         file_loc = os.path.join(komplexity_dir, file)
         fasta_name = file[:-1] + 'a'
         out_loc = os.path.join(fasta_dir, fasta_name)
-        command = f'seqtk seq -A {file_loc} > {out_loc}'
-        name = pipeline.split('/')[-1]
-        slurm.slurm_job(command, f'{name}_fasta', hours=12, days=0, memory=16)
+        if not os.path.exists(out_loc):
+            command = f'seqtk seq -A {file_loc} > {out_loc}'
+            name = pipeline.split('/')[-1]
+            slurm.slurm_job(command, f'{name}_fasta', hours=1, days=0, memory=16)
 
 
 

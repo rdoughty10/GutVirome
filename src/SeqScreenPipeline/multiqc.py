@@ -16,9 +16,9 @@ def multiqc(pipeline:str):
     multiqc_dir = os.path.join(pipeline, 'multiqc')
 
     ## process with multiqc
-    command = f'multiqc {fastqc_dir}/_fastqc.zip -o {multiqc_dir}'
+    command = f'multiqc {fastqc_dir}/*fastqc.zip -o {multiqc_dir}'
     name = pipeline.split('/')[-1]
-    slurm.slurm_job(command, f'{name}_multiqc', hours=12, days=0, memory=16)
+    slurm.slurm_job(command, f'{name}_multiqc', hours=6, days=0, memory=16)
 
 
 

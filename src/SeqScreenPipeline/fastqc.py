@@ -21,7 +21,7 @@ def fastqc(pipeline:str):
     ## process with fastqc
     command = f'fastqc -f fastq -o {fastqc_dir} -t 32 {" ".join(input_files)}'
     name = pipeline.split('/')[0]
-    slurm.slurm_job(command, f'{name}_fastqc', hours=12, days=0, memory=16)
+    slurm.slurm_job(command, f'{name}_fastqc', hours=6, days=0, memory=16)
 
 
 

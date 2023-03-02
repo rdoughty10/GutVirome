@@ -27,6 +27,8 @@ def initialize(output:str, name:str):
     komplexity_folder = os.path.join(output_folder, 'komplexity')
     fasta_folder = os.path.join(output_folder, 'fasta')
     seqscreen_folder = os.path.join(output_folder, 'seqscreen')
+    taxonkit_folder = os.path.join(output_folder, 'taxonkit')
+    processing_folder = os.path.join(output_folder, 'output')
 
     mkdir_p(fastq_folder)
     mkdir_p(fastqc_folder)
@@ -35,11 +37,16 @@ def initialize(output:str, name:str):
     mkdir_p(seqscreen_folder)
     mkdir_p(fasta_folder)
     mkdir_p(seqtk_folder)
+    mkdir_p(taxonkit_folder)
+    mkdir_p(processing_folder)
     
-    ## seqscreen sub folders
+    ## seqscreen and taxonkit sub folders
     fast = os.path.join(seqscreen_folder, 'fast')
     sensitive = os.path.join(seqscreen_folder, 'sensitive')
-    
+    mkdir_p(fast)
+    mkdir_p(sensitive)
+    fast = os.path.join(taxonkit_folder, 'fast')
+    sensitive = os.path.join(taxonkit_folder, 'sensitive')
     mkdir_p(fast)
     mkdir_p(sensitive)
 
