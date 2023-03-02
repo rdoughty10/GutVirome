@@ -1,0 +1,34 @@
+process {
+	executor = "slurm"
+	time="1h"	
+	withName: 'initialize|Create_Working_Directories|Verify_Fasta|Initialize' {
+		memory="1G"
+		time="1h"
+
+	}
+	withName: 'seqmapper|functional_annotation|report_generation'{
+		memory="1G"
+		time="6h"
+	}
+	withName:'seqscreen_tsv_report|seqscreen_html_report'{
+		memory="16G"
+		time="1h"
+	}
+	withName: 'taxonomic_identification'{
+		memory="1G"
+		time="3d"
+	}
+	withName:'blastN|blastX'{
+		memory="400G"
+		time="36h"
+	}
+	withName:'centrifuge'{
+		memory="245G"
+		time="6h"
+	}
+	withName:'merge_centrifuge_diamond|diamond|postprocessDiamond|mummer|megares|functional_assignments|outlier_detection|taxonomic_assignment|bowtie2|rapsearch2|bsat_blacklist|pfam_hmm'{
+		memory="100G"
+		time="6h"
+	}
+	
+}
