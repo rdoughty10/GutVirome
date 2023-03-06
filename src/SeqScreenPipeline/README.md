@@ -1,8 +1,8 @@
 # SeqScreen Pipeline
 This set of files pipelines the process from raw fastq samples to a processed table of seqscreen results for batched samples. The pipeline was developed in February 2023 and supports the processing of Gut Microbiome samples for processing on a slurm cluster
 
-## Overview of Pipeline
-The pipeline consists of running 9 different python scripts, which together fully process raw fastq files into a report of read numbers from seqscreen. 
+## Overview of Base Pipeline
+The base pipeline consists of running 9 different python scripts, which together fully process raw fastq files into a report of read numbers from seqscreen. 
 
 1) Initialize Pipeline (initialize_pipeline.py) 
 2) FastQC (fastqc.py)
@@ -169,7 +169,7 @@ options:
 ```
 
 
-## 4) Komplexity
+## 5) Komplexity
 Komplexity is the second step of quality control. 
 
 In order to run komplexity on the seqtk output files simply use the command:
@@ -181,14 +181,14 @@ python komplexity.py [location of pipeline]
 For example, if you wanted to process the folder you created above, you would use the command 
 
 ```
-python seqtk.py ~/cancer_genomes
+python komplexity.py ~/cancer_genomes
 ```
 
 Full description of the command is seen here:
 ```
-usage: seqtk.py [-h] pipeline
+usage: komplexity.py [-h] pipeline
 
-Bulk processes folder of fastq files with seqtk
+Bulk processes folder of seqtk output files with komplexity
 
 positional arguments:
   pipeline    pipeline directory
@@ -197,3 +197,131 @@ options:
   -h, --help  show this help message and exit
 ```
 
+
+## 6) Fasta
+Fasta conversion is an is the last step before running seqscreen. 
+
+In order to convert the komplexity output to fasta format simply use the command:
+
+```
+python fasta.py [location of pipeline]
+```
+
+For example, if you wanted to process the folder you created above, you would use the command 
+
+```
+python fasta.py ~/cancer_genomes
+```
+
+Full description of the command is seen here:
+```
+usage: fasta.py [-h] pipeline
+
+Bulk processes folder of komplexity outputs to fasta
+
+positional arguments:
+  pipeline    pipeline directory
+
+options:
+  -h, --help  show this help message and exit
+```
+
+
+## 7) Seqscreen
+Seqscreen.py runs seqscreen pipeline on the processed fasta files. The function is more complex and can be run in both sensitive and fast mode. 
+
+For more information on the differences between the modes, see the paper or the wiki  
+Paper: https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02695-x  
+Wiki: https://gitlab.com/treangenlab/seqscreen/-/wikis/home  
+
+If you have not used SeqScreen before, it is necessary to download the databases, as described in the wiki.
+
+In order to run seqscreen on the komplexity output files using sensitive mode simply use the following command:  
+
+```
+python seqscreen.py [location of pipeline] [location of databases] --threads [threads] --sensitive
+```
+
+If you would like to run fast mode, simply leave the `--sensitive` tag out  
+
+For example, if you wanted to process the folder you created above with sensitive mode and 32 threads, you would use the command 
+
+```
+python komplexity.py ~/cancer_genomes [location of database] --threads 32 --sensitive
+```
+
+Full description of the command and other options is seen here:
+```
+usage: seqscreen.py [-h] [-t THREADS] [-s] [--local-launch] pipeline db
+
+Runs SeqScreen on fasta files
+
+positional arguments:
+  pipeline              location of pipeline files
+  db                    Seqscreen Database Location
+
+options:
+  -h, --help            show this help message and exit
+  -t THREADS, --threads THREADS
+                        Number of threads
+  -s, --sensitive       Run SeqScreen in sensitive mode
+  --local-launch        Launch the seqscreen from local (still uses slurm for subprocesses)
+```
+
+
+Please note that the `--local-launch` option is not recommended and may not work on all systems. Using this option launches the main seqscreen script on the head node of your slurm cluster. Often this is not the intention of the slurm cluster head node, so it may be cancelled or have time constraints that are not given to a submitted job. 
+
+
+## 8) Taxonkit
+Taxonkit.py takes the output from seqscreen and retrieves the taxonomic lineages and information for the assignments. This is an important step to understand the composition of the sample at higher levels than the assignment.
+
+If never used before, you must download the taxonkit database, instructions can be found here: https://bioinf.shenwei.me/taxonkit/#dataset  
+
+The taxonkit.py function can be run using the following:
+
+```
+python taxonkit.py [location of pipeline] [db location]
+```
+
+Full description of the command is seen here:
+```
+usage: taxonkit.py [-h] [-s] pipeline db
+
+Runs SeqScreen on fasta files
+
+positional arguments:
+  pipeline         location of pipeline files
+  db               Taxonkit Database Location
+
+options:
+  -h, --help       show this help message and exit
+  -s, --sensitive  Process sensitive mode files
+```
+
+## 9) Results
+Results.py is the last step of our process for the basic pipeline. This takes the output from all of the samples and creates overview files with the reads counts and taxonomy information at different levels
+
+
+```
+python results.py [location of pipeline]
+```
+
+For example, if you wanted to process the folder you created above, you would use the command 
+
+```
+python results.py ~/cancer_genomes
+```
+
+Full description of the command is seen here:
+```
+usage: results.py [-h] pipeline
+
+Gives results in human readable format
+
+positional arguments:
+  pipeline    pipeline directory
+
+options:
+  -h, --help  show this help message and exit
+  -s, --sensitive  Process sensitive mode files
+```
