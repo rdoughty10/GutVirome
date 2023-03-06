@@ -4,10 +4,12 @@
 import argparse
 import os
 
-def mkdir_p(directory:str):
-    '''make directory if does not exist'''
+
+def mkdir_p(directory):
+    """helper function"""
     if not os.path.exists(directory):
         os.mkdir(directory)
+
 
 def blastn(query:str,
            subject:str,
@@ -27,7 +29,7 @@ def blastn(query:str,
         days (int, optional): number of days for slurm. Defaults to 0.
         hours (int, optional): number of hours for slurm. Defaults to 12.
         memory (int, optional): memory in GB for slurm. Defaults to 128.
-        email (str, optional): email for slurm. Defaults to my email. 
+        email (str, optional): email for slurm. Defaults to author's email. 
     """
     job_directory = f'{os.getcwd()}/.job'
     mkdir_p(job_directory)
@@ -47,6 +49,7 @@ def blastn(query:str,
         else:
             slurm.writelines(f"#SBATCH -t {hours}:00:00\n")
         slurm.writelines(f"#SBATCH --mem {memory}G\n")
+        slurm.writelines(f"#SBATCH --cpus-per-task {threads}\n")
         slurm.writelines("#SBATCH --mail-type=begin\n")
         slurm.writelines("#SBATCH --mail-type=end\n")
         slurm.writelines("#SBATCH --mail-type=fail\n")
@@ -70,7 +73,7 @@ def parse_args():
                         help='Number of days running for slurm')
     parser.add_argument('--hours', default=12, type=int,
                         help='Number of hours running for slurm')
-    parser.add_argument('--memory', default=128, type=int,
+    parser.add_argument('--memory', default=64, type=int,
                         help='Memory for slurm (GB)')
     parser.add_argument('--email', default='rdd57@case.edu', type=str,
                         help='Email for slurm updates')
