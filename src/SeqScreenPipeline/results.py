@@ -188,6 +188,8 @@ def get_results(pipeline:str, sensitive:bool):
 
 
 def parse_args():
+    """Parses args for command
+    """
     parser = argparse.ArgumentParser(description='Gives results in human readable format')
     parser.add_argument('pipeline', type=str, help='Location of pipeline files')
     parser.add_argument('-s', '--sensitive',

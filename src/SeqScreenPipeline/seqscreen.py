@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 
-def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True):
+def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True, local_launch:bool=False):
     """Runs seqscreen on series of files
 
     Args:
@@ -28,12 +28,13 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
     fasta_files = os.listdir(fasta_dir)
     fasta_files = [file for file in fasta_files if '.fasta' in file] ## filter any weird nextflow files that may pop up
     
-    fasta_files = [file for file in fasta_files if 'P1' in file] ## testing purposes
+    fasta_files = [file for file in fasta_files if 'P3' in file] ## testing purposes../
 
     ### need to think about how to do this, because creating a job for 150 samples
     # or more might be a bit selfish. For 8 it is probably fine tho
-    use_slurm = False
+    use_slurm = not local_launch
     if use_slurm:
+        print('Launching seqscreen jobs on slurm')
         for file in fasta_files:
             file_loc = os.path.join(fasta_dir, file)
             working_loc = os.path.join(seqscreen_dir, file)
@@ -45,7 +46,7 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
                                               working_loc,
                                               sensitive,
                                               threads=threads,
-                                              days=2)
+                                              days=3)
                 else:
                     seqscreen_slurm.seqscreen(file_loc,
                                               database,
@@ -53,7 +54,7 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
                                               sensitive,
                                               threads=threads,
                                               days=0,
-                                              hours=5)
+                                              hours=6)
     else:
         data = [(os.path.join(fasta_dir, file), database, os.path.join(seqscreen_dir, file), sensitive, threads) for file in fasta_files if not os.path.exists(os.path.join(seqscreen_dir, file))]
         pool = mp.Pool(8)
@@ -61,7 +62,7 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
 
 
 def seqscreen(fasta: str, database: str, working: str, sensitive:bool, threads:int):
-    """Runs seqscreen file
+    """Runs seqscreen file locally using subprocess
 
     Args:
         fasta (str): fasta file
@@ -98,7 +99,7 @@ def seqscreen(fasta: str, database: str, working: str, sensitive:bool, threads:i
             '--report_prefix'
         ],  check=True,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT) 
+            stderr=subprocess.STDOUT)
 
     print(f'Completed seqscreen (Sensitive={sensitive}) for file: {fasta} at {datetime.now().strftime("%H:%M:%S")}')
 
@@ -114,14 +115,19 @@ def parse_args():
                         action='store_true',
                         default=False,
                         help='Run SeqScreen in sensitive mode')
+    parser.add_argument('--local-launch',
+                        action='store_false',
+                        default=False,
+                        help="Launch the seqscreen from local (still uses slurm for subprocesses)")
 
     args = parser.parse_args()
     pipeline = args.pipeline
     database = args.db
     threads = args.threads
     sensitive = args.sensitive
+    launch_mode = args.local_launch
 
-    run_seqscreen(pipeline, database, threads, sensitive)
+    run_seqscreen(pipeline, database, threads, sensitive, launch_mode)
 
 
 if __name__=="__main__":

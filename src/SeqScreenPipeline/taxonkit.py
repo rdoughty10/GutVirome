@@ -34,21 +34,22 @@ def run_taxonkit(pipeline:str, database:str, sensitive:bool):
         out_name = report.split('_seqscreen_report.tsv')[0].split("/")[-1] + ".tsv"
         output = os.path.join(taxonkit_dir, out_name)
         
-        print('taxonkit lineage',
-            report,
-            '-i', 2,
-            '--data-dir', database,
-            '-o', output,
-            '-R')
+        if not os.path.exists(output):
+            print('taxonkit lineage',
+                report,
+                '-i', 2,
+                '--data-dir', database,
+                '-o', output,
+                '-R')
 
-        subprocess.run([
-            'taxonkit', 'lineage',
-            report,
-            '-i', '2',
-            '--data-dir', database,
-            '-o', output,
-            '-R'
-        ], check=True)
+            subprocess.run([
+                'taxonkit', 'lineage',
+                report,
+                '-i', '2',
+                '--data-dir', database,
+                '-o', output,
+                '-R'
+            ], check=True)
 
 
 
