@@ -29,6 +29,8 @@ def initialize(output:str, name:str):
     seqscreen_folder = os.path.join(output_folder, 'seqscreen')
     taxonkit_folder = os.path.join(output_folder, 'taxonkit')
     processing_folder = os.path.join(output_folder, 'output')
+    unmapped_folder = os.path.join(output_folder, 'unmapped')
+    unmapped_blast_folder = os.path.join(output_folder, 'unmapped_blast')
 
     mkdir_p(fastq_folder)
     mkdir_p(fastqc_folder)
@@ -39,8 +41,10 @@ def initialize(output:str, name:str):
     mkdir_p(seqtk_folder)
     mkdir_p(taxonkit_folder)
     mkdir_p(processing_folder)
+    mkdir_p(unmapped_folder)
+    mkdir_p(unmapped_blast_folder)
     
-    ## seqscreen and taxonkit sub folders
+    ## seqscreen, taxonkit, unmapped, unmapped_blast sub folders
     fast = os.path.join(seqscreen_folder, 'fast')
     sensitive = os.path.join(seqscreen_folder, 'sensitive')
     mkdir_p(fast)
@@ -49,7 +53,14 @@ def initialize(output:str, name:str):
     sensitive = os.path.join(taxonkit_folder, 'sensitive')
     mkdir_p(fast)
     mkdir_p(sensitive)
-
+    fast = os.path.join(unmapped_folder, 'fast')
+    sensitive = os.path.join(unmapped_folder, 'sensitive')
+    mkdir_p(fast)
+    mkdir_p(sensitive)
+    fast = os.path.join(unmapped_blast_folder, 'fast')
+    sensitive = os.path.join(unmapped_blast_folder, 'sensitive')
+    mkdir_p(fast)
+    mkdir_p(sensitive)
 
 def parse_args():
     """Parses arguments for script form
