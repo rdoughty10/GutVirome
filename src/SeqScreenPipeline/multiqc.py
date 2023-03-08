@@ -3,7 +3,8 @@ Bulk-processes files with multiqc
 """
 import argparse
 import os
-import slurm
+from src.util.slurm import slurm
+
 
 
 def multiqc(pipeline:str):
@@ -18,7 +19,7 @@ def multiqc(pipeline:str):
     ## process with multiqc
     command = f'multiqc {fastqc_dir}/*fastqc.zip -o {multiqc_dir}'
     name = pipeline.split('/')[-1]
-    slurm.slurm_job(command, f'{name}_multiqc', hours=6, days=0, memory=16)
+    slurm(command, f'{name}_multiqc', hours=6, days=0, memory=16)
 
 
 

@@ -11,7 +11,7 @@ def mkdir_p(directory:str):
         os.mkdir(directory)
 
 
-def slurm_job(
+def slurm(
            command:str,
            name: str,
            days:int=1,
@@ -73,7 +73,7 @@ def parse_args():
     memory = args.memory
     email = args.email
 
-    slurm_job(command, name, days=days, hours=hours, memory=memory, email=email)
+    slurm(command, name, days=days, hours=hours, memory=memory, email=email)
 
 
 if __name__=="__main__":

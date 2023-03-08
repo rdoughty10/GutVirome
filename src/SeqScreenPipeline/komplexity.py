@@ -3,7 +3,7 @@ Bulk-processes files with komplexity
 """
 import argparse
 import os
-import slurm
+from src.util.slurm import slurm
 
 
 def komplexity(pipeline:str):
@@ -26,7 +26,7 @@ def komplexity(pipeline:str):
         if not os.path.exists(output_file):
             command = f'kz --mask < {input_file} > {output_file}\nkz --filter < {output_file} > {output_file_filtered}'
             name = pipeline.split('/')[-1]
-            slurm.slurm_job(command, f'{name}_komplexity', hours=2, days=0, memory=16)
+            slurm(command, f'{name}_komplexity', hours=2, days=0, memory=16)
 
 
 

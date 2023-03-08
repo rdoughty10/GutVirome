@@ -4,7 +4,7 @@ converts fastq files to fasta files with seqtk
 import argparse
 import os
 import glob
-import slurm
+from src.util.slurm import slurm
 
 
 def fasta(pipeline:str):
@@ -28,7 +28,7 @@ def fasta(pipeline:str):
         if not os.path.exists(out_loc):
             command = f'seqtk seq -A {file_loc} > {out_loc}'
             name = pipeline.split('/')[-1]
-            slurm.slurm_job(command, f'{name}_fasta', hours=1, days=0, memory=16)
+            slurm(command, f'{name}_fasta', hours=1, days=0, memory=16)
 
 
 

@@ -5,9 +5,8 @@ import os
 import sys
 import glob
 import pandas as pd
-import slurm
-import sys
-import blastn
+from src.util.slurm import slurm
+from src.util.blastn import blastn
 
 
 def run_dbs(pipeline:str, mgv:str=None, gpd:str=None, sensitive:bool=False):
@@ -29,9 +28,9 @@ def run_dbs(pipeline:str, mgv:str=None, gpd:str=None, sensitive:bool=False):
         
     fasta_dir = os.path.join(pipeline, 'fasta')
 
-    seqscreen_folders = glob.glob(f'{seqscreen_dir}/*.fasta')
+    seqscreen_folders = glob.glob(f'{seqscreen_dir}/*.output')
     
-    for output_folder in seqscreen_folders[:1]:
+    for output_folder in seqscreen_folders:
         report_loc = os.path.join(output_folder, 'report_generation')
         report = glob.glob(f'{report_loc}/*.tsv')
         if len(report) == 0:
@@ -67,15 +66,15 @@ def run_dbs(pipeline:str, mgv:str=None, gpd:str=None, sensitive:bool=False):
 
         if not os.path.exists(new_fasta):
             command = f'seqtk subseq {original_fasta} {lst_output} > {new_fasta}'
-            slurm.slurm_job(command, name=f'unmapped:{out_name}', days=0, hours=1, memory=1)
+            slurm(command, name=f'unmapped:{out_name}', days=0, hours=1, memory=1)
 
 
-        ## run blast queries for whichever databases are selected
+        # run blast queries for whichever databases are selected
         if mgv is not None:
-            blastn.blastn(new_fasta, mgv, f'{out_name}xMGV.tsv', threads=32, days=1, memory=250)
+            blastn(new_fasta, mgv, f'{out_name}xMGV', threads=32, days=0, hours=1, memory=150)
     
         if gpd is not None:
-            blastn.blastn(new_fasta, gpd, f'{out_name}xGPD.tsv', threads=32, days=1, memory=250)
+            blastn(new_fasta, gpd, f'{out_name}xGPD', threads=32, days=0, hours=1, memory=150)
 
 
 

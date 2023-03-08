@@ -28,7 +28,7 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
     fasta_files = os.listdir(fasta_dir)
     fasta_files = [file for file in fasta_files if '.fasta' in file] ## filter any weird nextflow files that may pop up
     
-    fasta_files = [file for file in fasta_files if 'P3' in file] ## testing purposes../
+    fasta_files = [file for file in fasta_files if 'P1' in file] ## testing purposes../
 
     ### need to think about how to do this, because creating a job for 150 samples
     # or more might be a bit selfish. For 8 it is probably fine tho

@@ -3,7 +3,7 @@ Bulk-processes files with seqtk
 """
 import argparse
 import os
-import slurm
+from src.util.slurm import slurm
 
 
 def seqtk(pipeline:str):
@@ -24,7 +24,7 @@ def seqtk(pipeline:str):
         if not os.path.exists(out_loc):
             command = f'seqtk seq -q 28 -n N -L 50 {file_loc} > {out_loc}'
             name = pipeline.split('/')[-1]
-            slurm.slurm_job(command, f'{name}_seqtk', hours=2, days=0, memory=16)
+            slurm(command, f'{name}_seqtk', hours=2, days=0, memory=16)
 
 
 

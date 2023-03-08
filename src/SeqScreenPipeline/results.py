@@ -32,6 +32,15 @@ def get_tax_counts(viral_ranks, viral, level='species'):
 
 
 def clean_count_data(data:list, files:list):
+    """Cleans the taxa information and returns list
+
+    Args:
+        data (list): data
+        files (list): files
+
+    Returns:
+        _type_: taxonomy data
+    """
 
     ## get unique taxa across all samples
     taxa = []
@@ -113,51 +122,8 @@ def seqscreen_metrics(file:str):
                    total_genus_assignments,
                    unique_families,
                    total_family_assignments]
-
-    counts = {'assigned': virus_counts,
-              'species': virus_species_counts,
-              'genus': virus_genus_counts,
-              'family': virus_family_counts}
-
-    return output_base_data, counts
-
-
-
-def get_results(pipeline:str, sensitive:bool):
-    """Aggregates results of taxonkit from seqscreen and provides a nice table
-
-    Args:
-        pipeline (str): _description_
-        sensitive (bool): _description_
-    """
-    if sensitive:
-        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
-    else:
-        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
-
-    files = os.listdir(taxonkit_dir)
-
-    main_data = []
-    assignment_data = []
-    species_data = []
-    genus_data = []
-    family_data = []
     
-    
-    for taxonkit_file in files:
-        file_loc = os.path.join(taxonkit_dir, taxonkit_file)
-
-        ## get information for that particular output
-        seqscreen_data, tax_counts = seqscreen_metrics(file_loc)
-        main_data.append(seqscreen_data)
-        
-        assignment_data.append(tax_counts['assigned'])
-        species_data.append(tax_counts['species'])
-        genus_data.append(tax_counts['genus'])
-        family_data.append(tax_counts['family'])
-
-    ## create the overview file from seqscreen_data outputs for each file
-    output = pd.DataFrame(main_data, columns=['filename',
+    output_labels = ['filename',
                    'total_reads',
                    'total_assigned_reads',
                    'assigned_percent',
@@ -169,22 +135,122 @@ def get_results(pipeline:str, sensitive:bool):
                    'unique_genuses',
                    'total_genus_assignments',
                    'unique_families',
-                   'total_family_assignments'])
+                   'total_family_assignments']
+
+    counts = {'assigned': virus_counts,
+              'species': virus_species_counts,
+              'genus': virus_genus_counts,
+              'family': virus_family_counts}
+
+    return (output_base_data, output_labels), counts
+
+
+def get_unmapped_data(file:str, database:str):
+    
+    ## import data
+    columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qlen', 'qstart', 'qend', 'slen', 'sstart', 'send', 'evalue', 'bitscore']
+    data = pd.read_csv(file, delimiter='\t', header=None, names=columns)
+
+    if database=='mgv':
+        metadata = pd.read_csv('../ViromeDatabaseAnalysis/metadata/mgv_contig_info.tsv', delimiter='\t')
+    if database=='gpd':
+        metadata = pd.read_csv('../ViromeDatabaseAnalysis/metadata/GPD_metadata.tsv', delimiter='\t')
+        
+    new_reads_with_hits = len(np.unique(data['qseqid']))
+    avg_hits_per_read = len(data) / new_reads_with_hits
+    number_unique_contigs = len(np.unique(data['sseqid']))
+    avg_reads_per_contig = len(data) / number_unique_contigs
+    
+    overview_data = [new_reads_with_hits, avg_hits_per_read, number_unique_contigs, avg_reads_per_contig]
+    overview_labels = [f'[{database}] Unmapped reads with hits', f'[{database}] Hits per read', f'[{database}] Number of contigs with hits', f'[{database}] Reads per contig']
+        
+    
+    
+    return (overview_data, overview_labels), 1
+    
+
+
+def get_results(pipeline:str, sensitive:bool):
+    """Aggregates results of taxonkit from seqscreen and provides a nice table
+
+    Args:
+        pipeline (str): _description_
+        sensitive (bool): _description_
+    """
+    if sensitive:
+        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
+        unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'sensitive')
+    else:
+        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
+        unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'fast')
+
+    unmapped_blast_reports = os.listdir(unmapped_data)
+    unmapped_blast_search = len(unmapped_blast_reports) > 0
+
+    files = os.listdir(taxonkit_dir)
+
+    main_data = []
+    main_labels = []
+    
+    assignment_data = []
+    species_data = []
+    genus_data = []
+    family_data = []
+    
+    
+    
+    for taxonkit_file in files:
+        file_loc = os.path.join(taxonkit_dir, taxonkit_file)
+
+        ## get information for that particular output
+        (seqscreen_data, seqscreen_labels), tax_counts = seqscreen_metrics(file_loc)
+        
+        ## get information for unmapped reads database output if it exist
+        if unmapped_blast_search:
+            base_file_name = taxonkit_file.split('.tsv')[0]
+            gpd = os.path.join(unmapped_data, f'{base_file_name}.fastaxGPD.tsv')
+            mgv = os.path.join(unmapped_data, f'{base_file_name}.fastaxMGV.tsv')
+            
+            (gpd_overview, gpd_labels), gpd_data = get_unmapped_data(gpd, 'gpd')
+            (mgv_overview, mgv_labels), mgv_data = get_unmapped_data(mgv, 'mgv')
+            
+            seqscreen_data.extend(gpd_overview)
+            seqscreen_data.extend(mgv_overview)
+            
+            seqscreen_labels.extend(gpd_labels)
+            seqscreen_labels.extend(mgv_labels)
+            
+        
+        main_data.append(seqscreen_data)
+        main_labels.append(seqscreen_labels)
+        
+        assignment_data.append(tax_counts['assigned'])
+        species_data.append(tax_counts['species'])
+        genus_data.append(tax_counts['genus'])
+        family_data.append(tax_counts['family'])
+        
+    main_labels = main_labels[0]
+    
+    
+    ## create the overview file from seqscreen_data outputs for each file
+    output = pd.DataFrame(main_data, columns=main_labels)
     output_loc = os.path.join(pipeline, 'output', 'fast_output.csv')
     output.to_csv(output_loc)
-    
-    
+
+
     assignment_data = clean_count_data(assignment_data, files)
     species_data = clean_count_data(species_data, files)
     genus_data = clean_count_data(genus_data, files)
     family_data = clean_count_data(family_data, files)
-    
+
     assignment_data.to_csv(os.path.join(pipeline, 'output', 'assignment_data.csv'))
     species_data.to_csv(os.path.join(pipeline, 'output', 'species_data.csv'))
     genus_data.to_csv(os.path.join(pipeline, 'output', 'genus_data.csv'))
     family_data.to_csv(os.path.join(pipeline, 'output', 'family_data.csv'))
 
 
+     
+    
 
 
 def parse_args():
@@ -195,13 +261,13 @@ def parse_args():
     parser.add_argument('-s', '--sensitive',
                         action='store_true',
                         default=False,
-                        help='Process sensitive mode files')  
-      
+                        help='Process sensitive mode files')
+
     args = parser.parse_args()
     pipeline = args.pipeline
     sensitive = args.sensitive
-    
+
     get_results(pipeline, sensitive)
-    
+
 if __name__=="__main__":
     parse_args()
