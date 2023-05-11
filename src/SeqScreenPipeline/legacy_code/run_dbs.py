@@ -5,7 +5,7 @@ import os
 import sys
 import glob
 import pandas as pd
-from src.util.slurm import slurm
+from slurm import slurm
 from src.util.blastn import blastn
 
 
