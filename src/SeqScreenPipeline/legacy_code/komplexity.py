@@ -3,7 +3,7 @@ Bulk-processes files with komplexity
 """
 import argparse
 import os
-from src.util.slurm import slurm
+from slurm import slurm
 
 
 def komplexity(pipeline:str):
@@ -17,7 +17,7 @@ def komplexity(pipeline:str):
 
     input_files = os.listdir(seqtk_dir)
 
-    ## process with seqtk
+    ## process with komplexity
     for file in input_files:
         input_file = os.path.join(seqtk_dir, file)
         file_name = file.split('.')[-0]
