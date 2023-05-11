@@ -6,6 +6,8 @@ import argparse
 import pandas as pd
 import numpy as np
 import os
+from io import StringIO
+import pandas as pd
 
 def parse_blastn(blastn:str, mgv:str="metadata/mgv_contig_info.tsv", gpd:str="metadata/GPD_metadata.tsv", alignment_cutoff:int=50):
     print('Reading in files:')
