@@ -16,8 +16,9 @@ def seqscreen(fasta:str,
            threads:int=1,
            days:int=3,
            hours:int=0,
-           memory:int=1,
-           email:str='rdd57@case.edu'):
+           memory:int=10,
+           email:str='rdd57@case.edu',
+           no_subslurm:bool=False):
     """Run blastn on slurm cluster
 
     Args:
@@ -29,36 +30,53 @@ def seqscreen(fasta:str,
         days (int, optional): number of days for slurm. Defaults to 1.
         hours (int, optional): number of hours for slurm. Defaults to 0.
         memory (int, optional): memory in GB for slurm. Defaults to 128.
-        email (str, optional): email for slurm. Defaults to author's email. 
+        email (str, optional): email for slurm. Defaults to author's email.
+        subslurm (bool, option): do not use heirarchical structure.
     """
     job_directory = f'{os.getcwd()}/.job'
     mkdir_p(job_directory)
 
     outname = fasta.split("/")[-1]
     job_file = os.path.join(job_directory, f"{outname}.slurm")
-
-    if sensitive:
-        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --sensitive --blastn'
+    
+    if no_subslurm:
+        if sensitive:
+            print('No subslurm sensitive job:')
+            seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --threads {threads} --report_prefix --sensitive --blastn --online'
+            days = 3
+            hours = 0
+            memory = 300
+        else:
+            print('No subslurm fast job:')
+            seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --threads {threads} --report_prefix --online'
+            days = 0
+            hours = 10
+            memory = 300
     else:
-        seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix'
-
+        if sensitive:
+            seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --sensitive --blastn --online'
+        else:
+            seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --online'
+            memory = 5
+            hours = 18
+            
     with open(job_file, "w") as slurm:
         slurm.writelines("#!/bin/bash\n")
         if days > 0:
             slurm.writelines(f"#SBATCH -t {days}-{hours}:00:00\n")
         else:
             slurm.writelines(f"#SBATCH -t {hours}:00:00\n")
-        slurm.writelines(f"#SBATCH -C clk\n")
+        if not no_subslurm:
+            slurm.writelines("#SBATCH -C clk\n")
         slurm.writelines(f"#SBATCH --mem {memory}G\n")
-        # slurm.writelines("#SBATCH --nodes 1\n")
-        # slurm.writelines("#SBATCH --exclusive\n")
-        # slurm.writelines("#SBATCH --ntasks 1\n")
-        # slurm.writelines(f"#SBATCH --cpus-per-task {threads}\n")
-        slurm.writelines("#SBATCH --mail-type=begin\n")
-        slurm.writelines("#SBATCH --mail-type=end\n")
-        slurm.writelines("#SBATCH --mail-type=fail\n")
-        slurm.writelines(f"#SBATCH --mail-user={email}\n")
+        # slurm.writelines("#SBATCH --mail-type=begin\n")
+        # slurm.writelines("#SBATCH --mail-type=end\n")
+        # slurm.writelines("#SBATCH --mail-type=fail\n")
+        # slurm.writelines(f"#SBATCH --mail-user={email}\n")
         slurm.writelines(f"#SBATCH --job-name={outname}\n")
+        if no_subslurm:
+            slurm.writelines("#SBATCH --nodes=1\n")
+            slurm.writelines(f"#SBATCH --cpus-per-task={threads}\n")
         slurm.writelines(seqscreen_query)
 
     os.system(f"sbatch {job_file}")
