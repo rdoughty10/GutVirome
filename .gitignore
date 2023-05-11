@@ -144,3 +144,7 @@ src/Miscellaneous/*
 .nextflow.log*
 .nextflow/
 *.out
+
+
+*.csv
+*.tsv
