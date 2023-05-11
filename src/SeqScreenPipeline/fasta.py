@@ -4,7 +4,7 @@ converts fastq files to fasta files with seqtk
 import argparse
 import os
 import glob
-from src.util.slurm import slurm
+from slurm import slurm
 
 
 def fasta(pipeline:str):
@@ -13,22 +13,25 @@ def fasta(pipeline:str):
     Args:
         pipeline (str): _description_
     """
-    komplexity_dir = os.path.join(pipeline, 'komplexity')
+    removed_human_dir = os.path.join(pipeline, 'removed-human')
     fasta_dir = os.path.join(pipeline, 'fasta')
 
-    all_files = glob.glob(f'{komplexity_dir}/*.fastq')
-    masked_files = glob.glob(f'{komplexity_dir}/*masked.fastq')
+    all_files = glob.glob(f'{removed_human_dir}/*.fastq')
+    masked_files = glob.glob(f'{removed_human_dir}/*masked.fastq')
     input_files = [file.split('/')[-1] for file in all_files if file not in masked_files]
+    
+    input_files = glob.glob(f'{removed_human_dir}/*.fastq')
 
     ## process with seqtk
     for file in input_files:
-        file_loc = os.path.join(komplexity_dir, file)
-        fasta_name = file[:-1] + 'a'
+        name = file.split('/')[-1]
+        fasta_name = name[:-1] + 'a'
         out_loc = os.path.join(fasta_dir, fasta_name)
         if not os.path.exists(out_loc):
-            command = f'seqtk seq -A {file_loc} > {out_loc}'
+            command = f'seqtk seq -A {file} > {out_loc}'
+            print(command)
             name = pipeline.split('/')[-1]
-            slurm(command, f'{name}_fasta', hours=1, days=0, memory=16)
+            slurm([command], f'{name}_fasta', hours=1, days=0, memory=4)
 
 
 

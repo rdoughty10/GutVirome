@@ -5,47 +5,38 @@ import os
 import glob
 import subprocess
 
-def run_taxonkit(pipeline:str, database:str, sensitive:bool):
+def run_taxonkit(pipeline:str, database:str, sensitive:bool, split_files:bool=False):
     """Runs taxonkit on all pipeline files
 
     Args:
         pipeline (str): pipeline file locations
         database (str): database for taxonkit
         sensitive (bool): process sensitive output instead 
+        split_files (bool): processes merged split files instead
     """
 
     if sensitive:
         seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'sensitive')
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
     else:
-        seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'fast')
+        if split_files:
+            seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'final')
+        else:
+            seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'fast')
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
 
-    seqscreen_folders = glob.glob(f'{seqscreen_dir}/*.fasta')
-
-    for output_folder in seqscreen_folders:
-        report_loc = os.path.join(output_folder, 'report_generation')
-        report = glob.glob(f'{report_loc}/*.tsv')
-        if len(report) == 0:
-            print(f'No output file available for {output_folder}')
-        else:
-            report = report[0]
-
-        out_name = report.split('_seqscreen_report.tsv')[0].split("/")[-1] + ".tsv"
+    reports = glob.glob(f'{seqscreen_dir}/*.tsv')
+    
+    for i, report in enumerate(reports):
+        out_name = report.split("/")[-1]
         output = os.path.join(taxonkit_dir, out_name)
         
         if not os.path.exists(output):
-            print('taxonkit lineage',
-                report,
-                '-i', 2,
-                '--data-dir', database,
-                '-o', output,
-                '-R')
-
+            print(f'[{i+1}] {report}')
             subprocess.run([
                 'taxonkit', 'lineage',
                 report,
-                '-i', '2',
+                '-i', '3',
                 '--data-dir', database,
                 '-o', output,
                 '-R'
@@ -63,14 +54,21 @@ def parse_args():
                         action='store_true',
                         default=False,
                         help='Process sensitive mode files')
+    parser.add_argument('--split-files',
+                        action='store_true',
+                        default=False,
+                        help='If files were split and then merged again')
 
     args = parser.parse_args()
     pipeline = args.pipeline
     database = args.db
     sensitive = args.sensitive
+    split = args.split_files
 
-    run_taxonkit(pipeline, database, sensitive)
+    run_taxonkit(pipeline, database, sensitive, split)
 
 
 if __name__=="__main__":
     parse_args()
+    
+## database for taxonkit is ../../../taxonkit_data

@@ -3,6 +3,8 @@
 import sys, math
 import argparse
 from Bio import SeqIO
+import os
+import glob
 
 
 
@@ -42,21 +44,37 @@ def split_files(ffile: str, chunks:int):
     for i, batch in enumerate(batch_iterator(records, chunksize)):
         output_name = ffile.split(".fasta")[0]
         filename = f"{output_name}_{i+1}.fasta"
-        with open(filename, "w") as handle:
-            count = SeqIO.write(batch, handle, "fasta")
-        print(f"Wrote {count} sequences to {filename}")
+        if not os.path.exists(filename):
+            with open(filename, "w") as handle:
+                count = SeqIO.write(batch, handle, "fasta")
+            print(f"Wrote {count} sequences to {filename}")
+        
 
 
 def parse_args():
     """Parses inputs if used
     """
     parser = argparse.ArgumentParser(description="Splits fasta file into n equivalent chunks")
-    parser.add_argument('fasta', type=str, help="Fasta input file")
-    parser.add_argument('n', type=int, help="Number of chunks to split file into")
+    parser.add_argument('pipeline', type=str, help="Pieline location")
+    parser.add_argument('n', type=int, help="Number of chunks to split each fasta file into")
 
     args = parser.parse_args()
-    fasta = args.fasta
+    pipeline = args.pipeline
     n = args.n
 
-    split_files(fasta, n)
+    fasta_dir = os.path.join(pipeline, 'fasta')
+    outdir = os.path.join(pipeline, 'fasta-split')
+
+    files_r1 = glob.glob(f'{fasta_dir}/*R1.fasta')
+    files_r2 = glob.glob(f'{fasta_dir}/*R2.fasta')
+    files = files_r1 + files_r2
+
+
+    for file in files:
+        output_name = file.split("/")[-1].split('.fasta')[0]
+        filename = f"{output_name}_1.fasta"
+        out_loc = os.path.join(outdir, filename)
+        if not os.path.exists(out_loc):
+            print(out_loc)
+            split_files(file, n)
     

@@ -80,8 +80,13 @@ def seqscreen_metrics(file:str):
     assigned_percent = np.round(total_assigned_reads/total_reads * 100, 2)
 
     ##parse the taxonkit outputs into own tables
-    split = assigned['Unnamed: 44'].str.split(";", expand=True)
-    ranks = assigned['Unnamed: 45'].str.split(";", expand=True)
+    split = assigned['Unnamed: 45'].str.split(";", expand=True)
+    ranks = assigned['Unnamed: 46'].str.split(";", expand=True)
+    
+    ## get base bacterial information and number of reads (# bacterial reads, percent bacterial reads assigned)
+    bacteria = split[split[1] =='Bacteria']
+    bacteria_reads = len(bacteria)
+    reads_percent_bacteria = np.round(bacteria_reads/total_assigned_reads * 100, 2)
 
     ## get base viral information and number of reads (# viral reads, percent viral reads assigned)
     viral = split[split[0] =='Viruses']
@@ -113,6 +118,8 @@ def seqscreen_metrics(file:str):
                    total_reads,
                    total_assigned_reads,
                    assigned_percent,
+                   bacteria_reads,
+                   reads_percent_bacteria,
                    viral_reads,
                    reads_percent_viral,
                    unique_assignments,
@@ -127,6 +134,8 @@ def seqscreen_metrics(file:str):
                    'total_reads',
                    'total_assigned_reads',
                    'assigned_percent',
+                   'bacteria_reads',
+                   'reads_percent_bacteria',
                    'viral_reads',
                    'reads_percent_viral',
                    'unique_assignments',
