@@ -37,7 +37,7 @@ def fastp(pipeline:str, alt:str=None, alt_name:str=None):
         threads = 5
         if not (os.path.exists(out_loc_r1) and os.path.exists(out_loc_r2)):
             command = f'fastp -i {file_loc_r1} -I {file_loc_r2} -o {out_loc_r1} -O {out_loc_r2} -l 50 -y -3 -W 4 -M 20 -x --thread {threads}'
-            slurm([command], f'{filename}_fastp', hours=1, days=0, memory=4, tasks=1, threads_per_task=threads)    
+            slurm([command], f'{filename}_fastp', hours=1, days=0, memory=4, tasks=1, threads_per_task=threads) 
     
     #   If doing deduplication
     #   command = f'fastp -i {file_loc_r1} -I {file_loc_r2} -o {out_loc_r1} -O {out_loc_r2} -l 50 -y --dedup -W 4 -M 20 -x --thread {threads}'

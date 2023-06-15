@@ -15,23 +15,21 @@ def fasta(pipeline:str):
     """
     removed_human_dir = os.path.join(pipeline, 'removed-human')
     fasta_dir = os.path.join(pipeline, 'fasta')
-
-    all_files = glob.glob(f'{removed_human_dir}/*.fastq')
-    masked_files = glob.glob(f'{removed_human_dir}/*masked.fastq')
-    input_files = [file.split('/')[-1] for file in all_files if file not in masked_files]
     
     input_files = glob.glob(f'{removed_human_dir}/*.fastq')
 
     ## process with seqtk
+    i = 1
     for file in input_files:
         name = file.split('/')[-1]
         fasta_name = name[:-1] + 'a'
         out_loc = os.path.join(fasta_dir, fasta_name)
         if not os.path.exists(out_loc):
             command = f'seqtk seq -A {file} > {out_loc}'
-            print(command)
-            name = pipeline.split('/')[-1]
-            slurm([command], f'{name}_fasta', hours=1, days=0, memory=4)
+            print(f'[{i}]{command}')
+            i+=1
+            name = out_loc.split('/')[-1]
+            slurm([command], f'{name}_fasta', hours=1, days=0, memory=16)
 
 
 

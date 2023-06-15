@@ -22,14 +22,12 @@ def remove_human(pipeline:str, genome:str, threads:int=1):
         r2_loc = os.path.join(fastp_dir, r2)
         out = os.path.join(removed_reads, name)
         command = f'bowtie2 -p {threads} -x {genome} -1 {r1_loc} -2 {r2_loc} --un-conc {out}'
-        print(command)
         out_parts = out.split('/')[-1]
         out1 = os.path.join(removed_reads, f'{out_parts}.1')
         out2 = os.path.join(removed_reads, f'{out_parts}.2')
         mv_1 = f'mv {out1} {out}_R1.fastq'
         mv_2 = f'mv {out2} {out}_R2.fastq'
-        print(mv_1)
-        print(mv_2)
+        
         if not os.path.exists(f'{out}_R1.fastq'):
             slurm([command, mv_1, mv_2], f'{name}_remove_human', hours=1, days=0, memory=10, threads_per_task=threads)
 

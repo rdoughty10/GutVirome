@@ -2,7 +2,13 @@
 """
 import os
 import argparse
-from src.util.util import mkdir_p
+
+
+def mkdir_p(directory:str):
+    '''make directory if does not exist'''
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+
 
 def initialize(output:str, name:str):
     """Initializes folders 
@@ -19,9 +25,10 @@ def initialize(output:str, name:str):
     fastq_folder = os.path.join(output_folder, 'fastq')
     fastqc_folder = os.path.join(output_folder, 'fastqc')
     multiqc_folder = os.path.join(output_folder, 'multiqc')
-    seqtk_folder = os.path.join(output_folder, 'seqtk')
-    komplexity_folder = os.path.join(output_folder, 'komplexity')
+    fastp_folder = os.path.join(output_folder, 'fastp')
+    removed_human_folder = os.path.join(output_folder, 'removed-human')
     fasta_folder = os.path.join(output_folder, 'fasta')
+    fasta_split_folder = os.path.join(output_folder, 'fasta-split')
     seqscreen_folder = os.path.join(output_folder, 'seqscreen')
     taxonkit_folder = os.path.join(output_folder, 'taxonkit')
     processing_folder = os.path.join(output_folder, 'output')
@@ -31,10 +38,11 @@ def initialize(output:str, name:str):
     mkdir_p(fastq_folder)
     mkdir_p(fastqc_folder)
     mkdir_p(multiqc_folder)
-    mkdir_p(komplexity_folder)
+    mkdir_p(fastp_folder)
+    mkdir_p(removed_human_folder)
     mkdir_p(seqscreen_folder)
     mkdir_p(fasta_folder)
-    mkdir_p(seqtk_folder)
+    mkdir_p(fasta_split_folder)
     mkdir_p(taxonkit_folder)
     mkdir_p(processing_folder)
     mkdir_p(unmapped_folder)
@@ -43,8 +51,10 @@ def initialize(output:str, name:str):
     ## seqscreen, taxonkit, unmapped, unmapped_blast sub folders
     fast = os.path.join(seqscreen_folder, 'fast')
     sensitive = os.path.join(seqscreen_folder, 'sensitive')
+    final = os.path.join(seqscreen_folder, 'final')
     mkdir_p(fast)
     mkdir_p(sensitive)
+    mkdir_p(final)
     fast = os.path.join(taxonkit_folder, 'fast')
     sensitive = os.path.join(taxonkit_folder, 'sensitive')
     mkdir_p(fast)

@@ -199,8 +199,9 @@ def parse_args():
     launch_mode = args.local_launch
     one_job = args.one_job
     sep_dir = args.sep_dir
+    split = args.split_input
 
-    run_seqscreen(pipeline, database, threads, sensitive, launch_mode, one_job, sep_dir)
+    run_seqscreen(pipeline, database, threads, sensitive, launch_mode, one_job, sep_dir, split)
 
 
 if __name__=="__main__":

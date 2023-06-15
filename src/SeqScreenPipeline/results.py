@@ -16,6 +16,7 @@ def get_tax_counts(viral_ranks, viral, level='species'):
     Returns:
         the number of unique viruses, the total reads with information at that level, and a dataframe of the virus and their counts
     """
+    
     species_cols = []
     for index, row in viral_ranks.iterrows():
         try:
@@ -23,12 +24,22 @@ def get_tax_counts(viral_ranks, viral, level='species'):
         except:
             col = None
         species_cols.append([index, col])
+    
+    if len(species_cols) == 0:
+        return 0, 0, {}
+        
     species_cols = pd.DataFrame(np.array(species_cols), columns=['index', 'col']).dropna().set_index('index').squeeze()
+     
+    if(isinstance(species_cols, int)):
+        return 0, 0, {}
+
+
     assigned_virus = viral.lookup(species_cols.index, species_cols.values)
     virus, counts = np.unique(assigned_virus, return_counts=True)
     unique_viruses = len(virus)
     virus_counts = {vir: count for vir, count in zip(virus, counts)}
     return unique_viruses, np.sum(counts), virus_counts
+
 
 
 def clean_count_data(data:list, files:list):
@@ -80,8 +91,8 @@ def seqscreen_metrics(file:str):
     assigned_percent = np.round(total_assigned_reads/total_reads * 100, 2)
 
     ##parse the taxonkit outputs into own tables
-    split = assigned['Unnamed: 45'].str.split(";", expand=True)
-    ranks = assigned['Unnamed: 46'].str.split(";", expand=True)
+    split = assigned.iloc[:, -2].str.split(";", expand=True)
+    ranks = assigned.iloc[:, -1].str.split(";", expand=True)
     
     ## get base bacterial information and number of reads (# bacterial reads, percent bacterial reads assigned)
     bacteria = split[split[1] =='Bacteria']
@@ -103,6 +114,7 @@ def seqscreen_metrics(file:str):
     virus_counts = {vir: count for vir, count in zip(virus, counts)}
 
     ##get the species values for each assignment
+    print(file)
     unique_species, total_species_assignments, virus_species_counts = get_tax_counts(viral_ranks,
                                                                                  viral,
                                                                                  level='species')
@@ -188,13 +200,13 @@ def get_results(pipeline:str, sensitive:bool):
     """
     if sensitive:
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
-        unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'sensitive')
+        #unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'sensitive')
     else:
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
-        unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'fast')
-
-    unmapped_blast_reports = os.listdir(unmapped_data)
-    unmapped_blast_search = len(unmapped_blast_reports) > 0
+        #unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'fast')
+    taxonkit_dir = pipeline
+    # unmapped_blast_reports = os.listdir(unmapped_data)
+    # unmapped_blast_search = len(unmapped_blast_reports) > 0
 
     files = os.listdir(taxonkit_dir)
 
@@ -215,19 +227,19 @@ def get_results(pipeline:str, sensitive:bool):
         (seqscreen_data, seqscreen_labels), tax_counts = seqscreen_metrics(file_loc)
         
         ## get information for unmapped reads database output if it exist
-        if unmapped_blast_search:
-            base_file_name = taxonkit_file.split('.tsv')[0]
-            gpd = os.path.join(unmapped_data, f'{base_file_name}.fastaxGPD.tsv')
-            mgv = os.path.join(unmapped_data, f'{base_file_name}.fastaxMGV.tsv')
+        # if unmapped_blast_search:
+        #     base_file_name = taxonkit_file.split('.tsv')[0]
+        #     gpd = os.path.join(unmapped_data, f'{base_file_name}.fastaxGPD.tsv')
+        #     mgv = os.path.join(unmapped_data, f'{base_file_name}.fastaxMGV.tsv')
             
-            (gpd_overview, gpd_labels), gpd_data = get_unmapped_data(gpd, 'gpd')
-            (mgv_overview, mgv_labels), mgv_data = get_unmapped_data(mgv, 'mgv')
+        #     (gpd_overview, gpd_labels), gpd_data = get_unmapped_data(gpd, 'gpd')
+        #     (mgv_overview, mgv_labels), mgv_data = get_unmapped_data(mgv, 'mgv')
             
-            seqscreen_data.extend(gpd_overview)
-            seqscreen_data.extend(mgv_overview)
+        #     seqscreen_data.extend(gpd_overview)
+        #     seqscreen_data.extend(mgv_overview)
             
-            seqscreen_labels.extend(gpd_labels)
-            seqscreen_labels.extend(mgv_labels)
+        #     seqscreen_labels.extend(gpd_labels)
+        #     seqscreen_labels.extend(mgv_labels)
             
         
         main_data.append(seqscreen_data)

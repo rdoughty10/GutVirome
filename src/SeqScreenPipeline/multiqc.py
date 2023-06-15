@@ -3,7 +3,7 @@ Bulk-processes files with multiqc
 """
 import argparse
 import os
-from src.util.slurm import slurm
+from slurm import slurm
 
 
 
@@ -13,13 +13,18 @@ def multiqc(pipeline:str):
     Args:
         pipeline (str): _description_
     """
-    fastqc_dir = os.path.join(pipeline, 'fastqc')
+    fastqc_dir_raw = os.path.join(pipeline, 'fastqc', 'raw')
+    fastqc_dir_fastp = os.path.join(pipeline, 'fastqc', 'fastp')
+    fastqc_dir_no_human = os.path.join(pipeline, 'fastqc', 'removed-human')
     multiqc_dir = os.path.join(pipeline, 'multiqc')
 
+
     ## process with multiqc
-    command = f'multiqc {fastqc_dir}/*fastqc.zip -o {multiqc_dir}'
+    command1 = f'multiqc {fastqc_dir_raw}/*fastqc.zip -o {multiqc_dir} -n raw_data'
+    command2 = f'multiqc {fastqc_dir_fastp}/*fastqc.zip -o {multiqc_dir} -n fastp_data'
+    command3 = f'multiqc {fastqc_dir_no_human}/*fastqc.zip -o {multiqc_dir} -n removed_human_data'
     name = pipeline.split('/')[-1]
-    slurm(command, f'{name}_multiqc', hours=6, days=0, memory=16)
+    slurm([command1, command2, command3], f'{name}_multiqc', hours=1, days=0, memory=4)
 
 
 

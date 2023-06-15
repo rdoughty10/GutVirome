@@ -5,6 +5,7 @@ import argparse
 from Bio import SeqIO
 import os
 import glob
+import subprocess
 
 
 
@@ -29,7 +30,7 @@ def batch_iterator(iterator, batch_size):
         if batch:
             yield batch
 
-def split_files(ffile: str, chunks:int):
+def split_files(ffile: str, chunks:int, out_dir:str):
     """Splits files into n chunks
 
     Args:
@@ -38,16 +39,19 @@ def split_files(ffile: str, chunks:int):
     """
     nseq = len([1 for line in open(ffile) if line.startswith(">")])
     chunksize=math.ceil(nseq/int(chunks))
-    print("Splitting multi-fasta file of", nseq, "sequences into chunks of size", chunksize)
+    print("Splitting fasta file of", nseq, "sequences into chunks of size", chunksize)
 
     records = SeqIO.parse(open(ffile), "fasta")
     for i, batch in enumerate(batch_iterator(records, chunksize)):
-        output_name = ffile.split(".fasta")[0]
+        output_name = ffile.split('/')[-1].split(".fasta")[0]
         filename = f"{output_name}_{i+1}.fasta"
-        if not os.path.exists(filename):
+        out_loc = os.path.join(out_dir, filename)
+        if not os.path.exists(out_loc):
             with open(filename, "w") as handle:
                 count = SeqIO.write(batch, handle, "fasta")
             print(f"Wrote {count} sequences to {filename}")
+            
+            subprocess.run(['mv', filename, out_loc], check=True)
         
 
 
@@ -55,7 +59,7 @@ def parse_args():
     """Parses inputs if used
     """
     parser = argparse.ArgumentParser(description="Splits fasta file into n equivalent chunks")
-    parser.add_argument('pipeline', type=str, help="Pieline location")
+    parser.add_argument('pipeline', type=str, help="Pipeline location")
     parser.add_argument('n', type=int, help="Number of chunks to split each fasta file into")
 
     args = parser.parse_args()
@@ -65,16 +69,17 @@ def parse_args():
     fasta_dir = os.path.join(pipeline, 'fasta')
     outdir = os.path.join(pipeline, 'fasta-split')
 
-    files_r1 = glob.glob(f'{fasta_dir}/*R1.fasta')
-    files_r2 = glob.glob(f'{fasta_dir}/*R2.fasta')
+    files_r1 = glob.glob(f'{fasta_dir}/*1.fasta')
+    files_r2 = glob.glob(f'{fasta_dir}/*2.fasta')
     files = files_r1 + files_r2
-
 
     for file in files:
         output_name = file.split("/")[-1].split('.fasta')[0]
-        filename = f"{output_name}_1.fasta"
+        filename = f"{output_name}.fasta"
         out_loc = os.path.join(outdir, filename)
         if not os.path.exists(out_loc):
             print(out_loc)
-            split_files(file, n)
+            split_files(file, n, outdir)
     
+if __name__=='__main__':
+    parse_args()

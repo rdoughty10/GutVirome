@@ -50,8 +50,8 @@ def seqscreen(fasta:str,
             print('No subslurm fast job:')
             seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --threads {threads} --report_prefix --online'
             days = 0
-            hours = 10
-            memory = 300
+            hours = 6
+            memory = 150
     else:
         if sensitive:
             seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --sensitive --blastn --online'
