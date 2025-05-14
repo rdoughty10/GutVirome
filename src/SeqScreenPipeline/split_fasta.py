@@ -66,20 +66,39 @@ def parse_args():
     pipeline = args.pipeline
     n = args.n
 
-    fasta_dir = os.path.join(pipeline, 'fasta')
-    outdir = os.path.join(pipeline, 'fasta-split')
+    fasta_dir = os.path.join(pipeline, 'fasta-split')
+    outdir = os.path.join(pipeline, 'fasta-split/fasta-split-slow')
 
-    files_r1 = glob.glob(f'{fasta_dir}/*1.fasta')
-    files_r2 = glob.glob(f'{fasta_dir}/*2.fasta')
-    files = files_r1 + files_r2
-
+    # files_r1 = glob.glob(f'{fasta_dir}/*1.fasta')
+    # files_r2 = glob.glob(f'{fasta_dir}/*2.fasta')
+    # files = set(files_r1 + files_r2)
+    
+    files = glob.glob(f'{fasta_dir}/*.fasta')
+    
+    to_split = ['2305_P71-69764_stool_virome_CACTI_Microbiome12_R2_8.fasta',
+                '2306_Pntc-00003_stool_virome_CACTI_Microbiome15_R1_1.fasta',
+                '2306_Pntc-00003_stool_virome_CACTI_Microbiome15_R1_5.fasta',
+                '2309_P153-01219_stool_virome_CACTI_Microbiome26_R2_4.fasta',
+                '2309_P164-01251_stool_virome_CACTI_Microbiome28_R2_2.fasta']
+    files = [file for file in files if file.split('/')[-1] in to_split]
+    print(files)
+    
     for file in files:
         output_name = file.split("/")[-1].split('.fasta')[0]
-        filename = f"{output_name}.fasta"
+        filename = f"{output_name}_1.fasta"
         out_loc = os.path.join(outdir, filename)
         if not os.path.exists(out_loc):
             print(out_loc)
             split_files(file, n, outdir)
+            
+    # single_end_files = set(glob.glob(f'{fasta_dir}/*.fasta')) - files    
+    # for file in single_end_files:
+    #     output_name = file.split("/")[-1].split('.fasta')[0]
+    #     filename = f"{output_name}_1.fasta"
+    #     out_loc = os.path.join(outdir, filename)
+    #     if not os.path.exists(out_loc):
+    #         print(out_loc)
+    #         split_files(file, n, outdir)
     
 if __name__=='__main__':
     parse_args()

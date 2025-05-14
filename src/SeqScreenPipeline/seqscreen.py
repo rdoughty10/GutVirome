@@ -36,22 +36,22 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
         sensitive (bool, optional): Use seqscreen sensitive mode. Defaults to True.
     """
     if split:
-        fasta_dir = os.path.join(pipeline, 'fasta-split')
+        fasta_dir = os.path.join(pipeline, 'fasta-split') ##NOTE will need to be changed back after slow samples processed
     else:
         fasta_dir = os.path.join(pipeline, 'fasta')
         
     if sensitive:
         seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'sensitive')
     else:
-        seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'fast')
+        seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'fast') ##NOTE same as above
 
     fasta_files = os.listdir(fasta_dir)
-    fasta_files = [file for file in fasta_files if '.fasta' in file] ## filter any weird nextflow files that may pop up
+    fasta_files = sorted([file for file in fasta_files if 'Pntc' not in file]) ## filter any weird nextflow files that may pop up
     
     #fasta_files = [file for file in fasta_files if file.split('2303_P')[-1].split('-')[0].isnumeric() and int(file.split('2303_P')[-1].split('-')[0]) >= 50] ## testing purposes../
     #fasta_files = [file for file in fasta_files if ('mock' in file and '_1' in file)]
-    #fasta_files = [file for file in fasta_files if '2303_P1-32635_stool_virome_CACTI_Microbiome8_R1_3' in file]
-    print(fasta_files)
+    # fasta_files = [file for file in fasta_files if 'TruSeq' in file]
+    # print(fasta_files)
     
     
     if sep_directories:
@@ -77,6 +77,7 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
                     ], check=True)
                 
                 #initiate a temp directory to launch seqscreen from -- solves nextflow problem with running multiple instances at the same time
+                tmp_dir_name = None
                 if sep_directories:
                     initial_working_directory = os.getcwd()
                     tmp_dir_name = f'{file}_fast' if not sensitive else f'{file}_sensitive'
@@ -88,26 +89,16 @@ def run_seqscreen(pipeline:str, database:str, threads:int=1, sensitive:bool=True
                 print(f'Submitting job for {file}')
                 
 
-                
-                if sensitive:
-                    seqscreen_slurm.seqscreen(file_loc,
-                                              database,
-                                              working_loc,
-                                              sensitive,
-                                              threads=threads,
-                                              days=2,
-                                              hours=0,
-                                              no_subslurm=one_job)
-                else:
-                    seqscreen_slurm.seqscreen(file_loc,
-                                              database,
-                                              working_loc,
-                                              sensitive,
-                                              threads=threads,
-                                              days=0,
-                                              hours=6,
-                                              no_subslurm=one_job)
-                 
+                seqscreen_slurm.seqscreen(file_loc,
+                                            database,
+                                            working_loc,
+                                            sensitive,
+                                            threads=threads,
+                                            days=2 if sensitive else 0,
+                                            hours=0 if sensitive else 6,
+                                            no_subslurm=one_job,
+                                            tmp_directory=tmp_dir_name)
+    
                 if sep_directories:
                     os.chdir(initial_working_directory)
                     

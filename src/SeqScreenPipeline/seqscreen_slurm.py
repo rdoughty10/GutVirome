@@ -18,7 +18,8 @@ def seqscreen(fasta:str,
            hours:int=0,
            memory:int=10,
            email:str='rdd57@case.edu',
-           no_subslurm:bool=False):
+           no_subslurm:bool=False,
+           tmp_directory:str=None):
     """Run blastn on slurm cluster
 
     Args:
@@ -51,7 +52,7 @@ def seqscreen(fasta:str,
             seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --threads {threads} --report_prefix --online'
             days = 0
             hours = 6
-            memory = 150
+            memory = 200
     else:
         if sensitive:
             seqscreen_query = f'seqscreen --fasta {fasta} --databases {database} --working {working} --slurm --threads {threads} --report_prefix --sensitive --blastn --online'
@@ -77,6 +78,11 @@ def seqscreen(fasta:str,
         if no_subslurm:
             slurm.writelines("#SBATCH --nodes=1\n")
             slurm.writelines(f"#SBATCH --cpus-per-task={threads}\n")
+        # if tmp_directory is not None:
+        #     slurm.writelines(f"cd {tmp_directory}")
+        
+        slurm.writelines("current_directory=$(pwd)\n")
+        slurm.writelines('export TMPDIR="$current_directory"\n')
         slurm.writelines(seqscreen_query)
 
     os.system(f"sbatch {job_file}")

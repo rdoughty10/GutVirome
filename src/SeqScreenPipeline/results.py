@@ -3,6 +3,8 @@ import argparse
 import os
 import pandas as pd
 import numpy as np
+from collections import Counter
+
 
 
 def get_tax_counts(viral_ranks, viral, level='species'):
@@ -17,28 +19,24 @@ def get_tax_counts(viral_ranks, viral, level='species'):
         the number of unique viruses, the total reads with information at that level, and a dataframe of the virus and their counts
     """
     
-    species_cols = []
+    
+    assignments = Counter()
+
     for index, row in viral_ranks.iterrows():
         try:
             col = list(row).index(level)
+            assignment = viral.loc[index, col]
+            assignments.update([assignment])
         except:
             col = None
-        species_cols.append([index, col])
+            assignment = None
     
-    if len(species_cols) == 0:
-        return 0, 0, {}
-        
-    species_cols = pd.DataFrame(np.array(species_cols), columns=['index', 'col']).dropna().set_index('index').squeeze()
-     
-    if(isinstance(species_cols, int)):
-        return 0, 0, {}
+    assignments = dict(assignments)
 
-
-    assigned_virus = viral.lookup(species_cols.index, species_cols.values)
-    virus, counts = np.unique(assigned_virus, return_counts=True)
-    unique_viruses = len(virus)
-    virus_counts = {vir: count for vir, count in zip(virus, counts)}
-    return unique_viruses, np.sum(counts), virus_counts
+    # assigned_virus = viral.lookup(species_cols.index, species_cols.values)
+    counts = list(assignments.values())
+    unique_viruses = len(assignments)
+    return unique_viruses, np.sum(counts), assignments
 
 
 
@@ -52,7 +50,9 @@ def clean_count_data(data:list, files:list):
     Returns:
         _type_: taxonomy data
     """
-
+    print(data)
+    print(files)
+    
     ## get unique taxa across all samples
     taxa = []
     for sample in data:
@@ -65,12 +65,19 @@ def clean_count_data(data:list, files:list):
     ## add counts for each sample
     for sample, filename in zip(data, files):
         row = pd.Series(sample, name=filename)
-        taxon_data = taxon_data.append(row)
+        taxon_data = pd.concat([taxon_data, pd.DataFrame([row])])
+        
+    print(taxon_data)
         
     return taxon_data.transpose()
     
 
-
+def last_non_na(row):
+    last_valid_index = row.last_valid_index()
+    if last_valid_index is not None:
+        return row[last_valid_index]
+    else:
+        return None
 
 def seqscreen_metrics(file:str):
     """Generates seqscreen metrics and other data given a taxonkit output file
@@ -104,25 +111,27 @@ def seqscreen_metrics(file:str):
     viral_ranks = ranks[split[0] == 'Viruses']
     viral_reads = len(viral)
     reads_percent_viral = np.round(viral_reads/total_assigned_reads * 100, 2)
-
+    viral_cop = viral
+    
     ## get the assigned values for each viral assignment and number of unique assignments 
     # (# unique assignments, list and count of each)
-    assigned_tax_col = viral.apply(pd.Series.last_valid_index, axis=1)
-    assigned_virus = viral.lookup(assigned_tax_col.index, assigned_tax_col.values)
-    virus, counts = np.unique(assigned_virus, return_counts=True)
+    viral['assignment'] = viral.apply(last_non_na, axis=1)
+    # assigned_tax_col = viral.apply(pd.Series.last_valid_index, axis=1)
+    # assigned_virus = viral.lookup(assigned_tax_col.index, assigned_tax_col.values)
+    virus, counts = np.unique(viral['assignment'], return_counts=True)
     unique_assignments = len(virus)
     virus_counts = {vir: count for vir, count in zip(virus, counts)}
 
     ##get the species values for each assignment
-    print(file)
+    # print(file)
     unique_species, total_species_assignments, virus_species_counts = get_tax_counts(viral_ranks,
-                                                                                 viral,
+                                                                                 viral_cop,
                                                                                  level='species')
     unique_genuses, total_genus_assignments, virus_genus_counts = get_tax_counts(viral_ranks,
-                                                                                 viral,
+                                                                                 viral_cop,
                                                                                  level='genus')
     unique_families, total_family_assignments, virus_family_counts = get_tax_counts(viral_ranks,
-                                                                                    viral,
+                                                                                    viral_cop,
                                                                                     level='family')
 
     ## aggregate data
@@ -202,13 +211,15 @@ def get_results(pipeline:str, sensitive:bool):
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
         #unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'sensitive')
     else:
-        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
+        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast', 'final')
         #unmapped_data = os.path.join(pipeline, 'unmapped_blast', 'fast')
-    taxonkit_dir = pipeline
+    # taxonkit_dir = pipeline
     # unmapped_blast_reports = os.listdir(unmapped_data)
     # unmapped_blast_search = len(unmapped_blast_reports) > 0
 
+    print(taxonkit_dir)
     files = os.listdir(taxonkit_dir)
+    files = sorted(files)
 
     main_data = []
     main_labels = []

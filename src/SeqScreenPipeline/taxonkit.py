@@ -20,13 +20,14 @@ def run_taxonkit(pipeline:str, database:str, sensitive:bool, split_files:bool=Fa
         taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'sensitive')
     else:
         if split_files:
-            seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'final')
+            seqscreen_dir = os.path.join(pipeline, 'taxonkit', 'fast', 'combined')
             reports = glob.glob(f'{seqscreen_dir}/*.tsv')
         else:
             seqscreen_dir = os.path.join(pipeline, 'seqscreen', 'fast')
             reports = glob.glob(f'{seqscreen_dir}/*/report_generation/*_seqscreen_report.tsv')
-        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast')
+        taxonkit_dir = os.path.join(pipeline, 'taxonkit', 'fast', 'final')
     
+    print(reports)
     for i, report in enumerate(reports):
         out_name = report.split("/")[-1]
         output = os.path.join(taxonkit_dir, out_name)
