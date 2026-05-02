@@ -30,10 +30,10 @@ def run_lca(pipeline:str, database:str):
         r2 = os.path.join(lca_dir, f'{filename}_R2.tsv')
         
         if os.path.exists(r2):  ### if paired end-read exists, combine using LCA
-            
+            taxonkit_out = os.path.join(combined_dir, f'{filename}_taxonkit.tsv')
             tmp_out = os.path.join(combined_dir, f'{filename}_tmp.tsv') ## file for temporary combined tsv file containing taxa from both reads
             
-            if not os.path.exists(tmp_out):
+            if not os.path.exists(taxonkit_out):
                 r1_df = pd.read_csv(r1, delimiter='\t', index_col=0)
                 r2_df = pd.read_csv(r2, delimiter='\t', index_col=0)
                 

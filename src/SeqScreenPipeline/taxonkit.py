@@ -35,12 +35,15 @@ def run_taxonkit(pipeline:str, database:str, sensitive:bool, split_files:bool=Fa
         if not os.path.exists(output):
             print(f'[{i+1}] {report}')
             subprocess.run([
-                'taxonkit', 'lineage',
+                'taxonkit', 'reformat2',
                 report,
-                '-i', '3',
+                '-I', '3',
                 '--data-dir', database,
                 '-o', output,
-                '-R'
+                "-B", "NORANK",
+                "-f", "d__{domain|acellular root|superkingdom|cellular root};p__{phylum};c__{class|no rank};o__{order|no rank};f__{family|no rank};g__{genus|no rank};s__{species|no rank}",
+                '-R', '-',
+                '-r', "unclassified"
             ], check=True)
 
 

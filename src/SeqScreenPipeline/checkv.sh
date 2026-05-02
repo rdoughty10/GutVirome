@@ -9,8 +9,8 @@ for dir in $parent_dir/*/; do
     file_name=$(basename "$dir")
     
     # Define the path to the FASTA file and output directory
-    fasta_file="${dir}${file_name}.contigs.fa"
-    output_dir="${dir}/checkv"
+    fasta_file="${dir}/genomad/${file_name}.contigs_summary/${file_name}.contigs_virus.fna"
+    output_dir="${dir}/genomad/checkv"
 
     if [ -d "$output_dir" ] && [ "$(ls -A $output_dir)" ]; then
         echo "Output for $file_name already exists, skipping submission."

@@ -29,13 +29,14 @@ def get_tax_counts(viral_ranks, viral, level='species'):
             assignments.update([assignment])
         except:
             col = None
-            assignment = None
+            assignment = 'Not Classified'
+            assignments.update([assignment])
     
     assignments = dict(assignments)
 
     # assigned_virus = viral.lookup(species_cols.index, species_cols.values)
     counts = list(assignments.values())
-    unique_viruses = len(assignments)
+    unique_viruses = len(assignments) ## will be maybe one high due to the 'Not Classified'
     return unique_viruses, np.sum(counts), assignments
 
 
@@ -78,6 +79,48 @@ def last_non_na(row):
         return row[last_valid_index]
     else:
         return None
+    
+def abbreviate(rank):
+    
+    rank_abbr = {
+        # Standard Ranks
+        'superkingdom': 'sk',
+        'domain':        'do',
+        'kingdom':       'ki',
+        'phylum':        'ph',
+        'class':         'cl',
+        'order':         'or',
+        'family':        'fa',
+        'genus':         'ge',
+        'species':       'sp',
+
+        # Sub-, infra-, and intermediate ranks
+        'subkingdom':    'skg',
+        'subphylum':     'sph',
+        'subclass':      'scl',
+        'infraorder':    'io',
+        'subfamily':     'sfa',
+        'subgenus':      'sge',
+        'parvorder':     'po',
+        'section':       'se',
+
+        # Informal or meta ranks
+        'clade':         'cld',
+        'no rank':       'nr',
+
+        # Below species
+        'strain':        'st',
+        'morph':         'mo',
+        'forma specialis': 'fs',
+    }
+    r = rank.strip().lower()
+    return rank_abbr.get(r, r[:2])
+
+# Row-wise combination function
+def combine_row(row):
+    taxa = row[-2].split(';')
+    ranks = row[-1].split(';')
+    return ';'.join(f"{abbreviate(rank)}_{taxon}" for rank, taxon in zip(ranks, taxa))
 
 def seqscreen_metrics(file:str):
     """Generates seqscreen metrics and other data given a taxonkit output file
@@ -111,11 +154,14 @@ def seqscreen_metrics(file:str):
     viral_ranks = ranks[split[0] == 'Viruses']
     viral_reads = len(viral)
     reads_percent_viral = np.round(viral_reads/total_assigned_reads * 100, 2)
-    viral_cop = viral
+    viral_cop = viral.copy()
     
     ## get the assigned values for each viral assignment and number of unique assignments 
     # (# unique assignments, list and count of each)
-    viral['assignment'] = viral.apply(last_non_na, axis=1)
+    viral_assignments = assigned[split[0] == 'Viruses']
+    viral['assignment'] = viral_assignments.apply(combine_row, axis=1)
+    # viral['assignment'] = viral.apply(last_non_na, axis=1)
+    
     # assigned_tax_col = viral.apply(pd.Series.last_valid_index, axis=1)
     # assigned_virus = viral.lookup(assigned_tax_col.index, assigned_tax_col.values)
     virus, counts = np.unique(viral['assignment'], return_counts=True)
@@ -133,6 +179,13 @@ def seqscreen_metrics(file:str):
     unique_families, total_family_assignments, virus_family_counts = get_tax_counts(viral_ranks,
                                                                                     viral_cop,
                                                                                     level='family')
+    unique_order, total_order_assignments, virus_order_counts = get_tax_counts(viral_ranks,
+                                                                                    viral_cop,
+                                                                                    level='order')
+    unique_class, total_class_assignments, virus_class_counts = get_tax_counts(viral_ranks,
+                                                                                    viral_cop,
+                                                                                    level='class')
+
 
     ## aggregate data
     output_base_data = [file.split('/')[-1].split('.tsv')[0],
@@ -149,7 +202,11 @@ def seqscreen_metrics(file:str):
                    unique_genuses,
                    total_genus_assignments,
                    unique_families,
-                   total_family_assignments]
+                   total_family_assignments,
+                   unique_order,
+                   total_order_assignments,
+                   unique_class,
+                   total_class_assignments]
     
     output_labels = ['filename',
                    'total_reads',
@@ -165,12 +222,18 @@ def seqscreen_metrics(file:str):
                    'unique_genuses',
                    'total_genus_assignments',
                    'unique_families',
-                   'total_family_assignments']
+                   'total_family_assignments',
+                   'unique_order',
+                   'total_order_assignments',
+                   'unique_class',
+                   'total_class_assignments']
 
     counts = {'assigned': virus_counts,
               'species': virus_species_counts,
               'genus': virus_genus_counts,
-              'family': virus_family_counts}
+              'family': virus_family_counts,
+              'order': virus_order_counts,
+              'class': virus_class_counts}
 
     return (output_base_data, output_labels), counts
 
@@ -228,10 +291,12 @@ def get_results(pipeline:str, sensitive:bool):
     species_data = []
     genus_data = []
     family_data = []
+    order_data = []
+    class_data = []
     
     
     
-    for taxonkit_file in files:
+    for taxonkit_file in files[:2]:
         file_loc = os.path.join(taxonkit_dir, taxonkit_file)
 
         ## get information for that particular output
@@ -260,6 +325,8 @@ def get_results(pipeline:str, sensitive:bool):
         species_data.append(tax_counts['species'])
         genus_data.append(tax_counts['genus'])
         family_data.append(tax_counts['family'])
+        order_data.append(tax_counts['order'])
+        class_data.append(tax_counts['class'])
         
     main_labels = main_labels[0]
     
@@ -274,11 +341,15 @@ def get_results(pipeline:str, sensitive:bool):
     species_data = clean_count_data(species_data, files)
     genus_data = clean_count_data(genus_data, files)
     family_data = clean_count_data(family_data, files)
+    order_data = clean_count_data(order_data, files)
+    class_data = clean_count_data(class_data, files)
 
     assignment_data.to_csv(os.path.join(pipeline, 'output', 'assignment_data.csv'))
     species_data.to_csv(os.path.join(pipeline, 'output', 'species_data.csv'))
     genus_data.to_csv(os.path.join(pipeline, 'output', 'genus_data.csv'))
     family_data.to_csv(os.path.join(pipeline, 'output', 'family_data.csv'))
+    order_data.to_csv(os.path.join(pipeline, 'output', 'order_data.csv'))
+    class_data.to_csv(os.path.join(pipeline, 'output', 'class_data.csv'))
 
 
      
